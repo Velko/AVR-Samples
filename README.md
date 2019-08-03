@@ -13,6 +13,7 @@ only external dependency is on [AVR Libc][avr-libc].
 Contents
 ========
 
+* RTC-DS1337 - use I2C interface to connect ATmega8 MCU with DS1337 RTC chip.
 
 
 
