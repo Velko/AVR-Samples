@@ -1,0 +1,32 @@
+PROGRAMMER=usbasp
+TARGET=i2cled
+OBJS=main.o usi_twi_slave.o
+
+CC=/usr/bin/avr-gcc
+CFLAGS=-g -Os -Wall -mcall-prologues -mmcu=attiny25
+OBJ2HEX=/usr/bin/avr-objcopy 
+DUDE=/usr/bin/avrdude 
+
+
+all: $(TARGET).hex
+
+program : $(TARGET).hex
+	$(DUDE) -p t25 -c $(PROGRAMMER) -y -U flash:w:$(TARGET).hex
+
+fuses:
+	# Turn off CKDIV8 fuse bit - enabling full speed on internal oscillator
+	# We need for USBASP to slow down this time. Fresh, unconfigured ATTiny
+	# runs too slow for default programming speed.
+	$(DUDE) -p t25 -c $(PROGRAMMER) -B 3 -U lfuse:w:0xE2:m
+
+%.elf : $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $@
+
+%.o : %.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
+%.hex : %.elf 
+	$(OBJ2HEX) -R .eeprom -O ihex $< $@
+
+clean :
+	rm -f *.hex *.elf *.o *~
