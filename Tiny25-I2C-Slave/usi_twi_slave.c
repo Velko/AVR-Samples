@@ -40,14 +40,8 @@ static volatile enum UsiSlaveState usi_slave_state;
 #define PIN_USI_SDA PINB0
 #define PIN_USI_SCL PINB2
 #define USI_START_COND_INT USISIF
-#define TIMER_INT_MASK_REG TIMSK
-#define OUTPUT_COMPARE_REG OCR0A
-#define TIMER_CONTROL_REG TCCR0B
-#define CLK_SELECT_PRESC_8 CS01
-#define OUTPUT_COMP_INT_EN OCIE0A
 #define USI_START_VECTOR USI_START_vect
 #define USI_OVERFLOW_VECTOR USI_OVF_vect
-#define TIMER_COMP_VECTOR TIM0_COMPA_vect
 
 static void SET_USI_TO_SEND_ACK(void)
 {
