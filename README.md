@@ -14,7 +14,7 @@ Contents
 ========
 
 * RTC-DS1337 - use I2C interface to connect ATmega8 MCU with DS1337 RTC chip.
-
+* Tiny25-I2C-Slave - Use Tiny25 USI as a I2C slave
 
 
 [avr-libc]: https://www.nongnu.org/avr-libc/
