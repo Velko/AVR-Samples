@@ -3,7 +3,7 @@ TARGET=i2cled
 OBJS=main.o usi_twi_slave.o
 
 CC=/usr/bin/avr-gcc
-CFLAGS=-g -Os -Wall -mcall-prologues -mmcu=attiny25
+CFLAGS=-g -Os -Wall -mcall-prologues -fshort-enums -mmcu=attiny25
 OBJ2HEX=/usr/bin/avr-objcopy 
 DUDE=/usr/bin/avrdude 
 
