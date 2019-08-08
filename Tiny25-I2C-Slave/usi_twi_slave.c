@@ -12,7 +12,6 @@
 //********** Static Variables **********//
 
 uint8_t uts_slaveAddress;
-static volatile unsigned char USI_TWI_Overflow_State;
 
 #define TWI_RX_BUFFER_SIZE  2
 
@@ -21,12 +20,16 @@ volatile uint8_t uts_rxCnt;
 volatile uint8_t uts_txBuf;
 
 
-#define USI_SLAVE_CHECK_ADDRESS (0x00)
-#define USI_SLAVE_SEND_DATA (0x01)
-#define USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA (0x02)
-#define USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA (0x03)
-#define USI_SLAVE_REQUEST_DATA (0x04)
-#define USI_SLAVE_GET_DATA_AND_SEND_ACK (0x05)
+enum UsiSlaveState {
+    USI_SLAVE_CHECK_ADDRESS,
+    USI_SLAVE_SEND_DATA,
+    USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA,
+    USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA,
+    USI_SLAVE_REQUEST_DATA,
+    USI_SLAVE_GET_DATA_AND_SEND_ACK
+};
+
+static volatile enum UsiSlaveState usi_slave_state;
 
 
 #define DDR_USI DDRB
@@ -124,7 +127,7 @@ void uts_init(void)
 ISR(USI_START_vect)
 {
     // Set default starting conditions for new TWI package
-    USI_TWI_Overflow_State = USI_SLAVE_CHECK_ADDRESS;
+    usi_slave_state = USI_SLAVE_CHECK_ADDRESS;
     DDR_USI  &= ~(1<<PORT_USI_SDA);                                 // Set SDA as input
 
     while ( (PIN_USI & (1<<PORT_USI_SCL)) && (!(PIN_USI & (1<<PORT_USI_SDA))));
@@ -158,7 +161,7 @@ ISR(USI_START_vect)
 ----------------------------------------------------------*/
 ISR(USI_OVF_vect)
 {
-    switch (USI_TWI_Overflow_State) {
+    switch (usi_slave_state) {
     // ---------- Address mode ----------
     // Check address and send ACK (and next USI_SLAVE_SEND_DATA) if OK, else reset USI.
     case USI_SLAVE_CHECK_ADDRESS:
@@ -166,11 +169,11 @@ ISR(USI_OVF_vect)
         {
             if ( USIDR & 0x01 )
             {
-                USI_TWI_Overflow_State = USI_SLAVE_SEND_DATA;
+                usi_slave_state = USI_SLAVE_SEND_DATA;
             }
             else
             {
-                USI_TWI_Overflow_State = USI_SLAVE_REQUEST_DATA;
+                usi_slave_state = USI_SLAVE_REQUEST_DATA;
             }
             SET_USI_TO_SEND_ACK();
         }
@@ -196,20 +199,20 @@ ISR(USI_OVF_vect)
         // Send whatever data is in Buffer
         USIDR      = uts_txBuf;
 
-        USI_TWI_Overflow_State = USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
+        usi_slave_state = USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA;
         SET_USI_TO_SEND_DATA();
         break;
 
     // Set USI to sample reply from master. Next USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA
     case USI_SLAVE_REQUEST_REPLY_FROM_SEND_DATA:
-        USI_TWI_Overflow_State = USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA;
+        usi_slave_state = USI_SLAVE_CHECK_REPLY_FROM_SEND_DATA;
         SET_USI_TO_READ_ACK();
         break;
 
     // ----- Master read data mode ------
     // Set USI to sample data from master. Next USI_SLAVE_GET_DATA_AND_SEND_ACK.
     case USI_SLAVE_REQUEST_DATA:
-        USI_TWI_Overflow_State = USI_SLAVE_GET_DATA_AND_SEND_ACK;
+        usi_slave_state = USI_SLAVE_GET_DATA_AND_SEND_ACK;
         SET_USI_TO_READ_DATA();
         break;
 
@@ -219,7 +222,7 @@ ISR(USI_OVF_vect)
         if (uts_rxCnt < TWI_RX_BUFFER_SIZE)
             uts_rxBuf[uts_rxCnt++] = USIDR;
 
-        USI_TWI_Overflow_State = USI_SLAVE_REQUEST_DATA;
+        usi_slave_state = USI_SLAVE_REQUEST_DATA;
         SET_USI_TO_SEND_ACK();
         break;
     }
