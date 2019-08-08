@@ -8,6 +8,7 @@
 #include <avr/interrupt.h>
 
 #include "usi_twi_slave.h"
+#include "gpio.h"
 
 //********** Static Variables **********//
 
@@ -31,14 +32,11 @@ enum UsiSlaveState {
 
 static volatile enum UsiSlaveState usi_slave_state;
 
+#define USI_SDA(dir)   GPIO(B, 0, dir)
+#define USI_SCL(dir)   GPIO(B, 2, dir)
+#define DDR_OUT        1
+#define DDR_IN         0
 
-#define DDR_USI DDRB
-#define PORT_USI PORTB
-#define PIN_USI PINB
-#define PORT_USI_SDA PORTB0
-#define PORT_USI_SCL PORTB2
-#define PIN_USI_SDA PINB0
-#define PIN_USI_SCL PINB2
 #define USI_START_COND_INT USISIF
 #define USI_START_VECTOR USI_START_vect
 #define USI_OVERFLOW_VECTOR USI_OVF_vect
@@ -46,7 +44,7 @@ static volatile enum UsiSlaveState usi_slave_state;
 static void SET_USI_TO_SEND_ACK(void)
 {
     USIDR = 0;                      /* Prepare ACK                         */
-    DDR_USI |= (1 << PORT_USI_SDA); /* Set SDA as output                   */
+    USI_SDA(DDR) = DDR_OUT;
     USISR = (0 << USI_START_COND_INT) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC)
             |                  /* Clear all flags, except Start Cond  */
             (0x0E << USICNT0); /* set USI counter to shift 1 bit. */
@@ -54,7 +52,7 @@ static void SET_USI_TO_SEND_ACK(void)
 
 static void SET_USI_TO_READ_ACK(void)
 {
-    DDR_USI &= ~(1 << PORT_USI_SDA); /* Set SDA as input */
+    USI_SDA(DDR) = DDR_IN;
     USIDR = 0;                       /* Prepare ACK        */
     USISR = (0 << USI_START_COND_INT) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC)
             |                  /* Clear all flags, except Start Cond  */
@@ -75,7 +73,8 @@ static void SET_USI_TO_TWI_START_CONDITION_MODE(void)
 
 static void SET_USI_TO_SEND_DATA(void)
 {
-    DDR_USI |= (1 << PORT_USI_SDA); /* Set SDA as output                  */
+    USI_SDA(DDR) = DDR_OUT;
+
     USISR = (0 << USI_START_COND_INT) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC)
             |                 /* Clear all flags, except Start Cond */
             (0x0 << USICNT0); /* set USI to shift out 8 bits        */
@@ -83,7 +82,8 @@ static void SET_USI_TO_SEND_DATA(void)
 
 static void SET_USI_TO_READ_DATA(void)
 {
-    DDR_USI &= ~(1 << PORT_USI_SDA); /* Set SDA as input                   */
+    USI_SDA(DDR) = DDR_IN;
+
     USISR = (0 << USI_START_COND_INT) | (1 << USIOIF) | (1 << USIPF) | (1 << USIDC)
             |                 /* Clear all flags, except Start Cond */
             (0x0 << USICNT0); /* set USI to shift out 8 bits        */
@@ -101,10 +101,10 @@ void uts_init(void)
 {
     uts_rxCnt = 0;
 
-    PORT_USI |= (1 << PORT_USI_SCL);        // Set SCL high
-    PORT_USI |= (1 << PORT_USI_SDA);        // Set SDA high
-    DDR_USI |= (1 << PORT_USI_SCL);         // Set SCL as output
-    DDR_USI &= ~(1 << PORT_USI_SDA);        // Set SDA as input
+    USI_SCL(PORT) = 1;
+    USI_SDA(PORT) = 1;
+    USI_SCL(DDR) = DDR_OUT;
+    USI_SDA(DDR) = DDR_IN;
     USICR = (1 << USISIE) | (0 << USIOIE) | // Enable Start Condition Interrupt. Disable Overflow Interrupt.
             (1 << USIWM1) | (0 << USIWM0) | // Set USI in Two-wire mode. No USI Counter overflow prior
                                             // to first Start Condition (potentail failure)
@@ -122,11 +122,11 @@ ISR(USI_START_vect)
 {
     // Set default starting conditions for new TWI package
     usi_slave_state = USI_SLAVE_CHECK_ADDRESS;
-    DDR_USI  &= ~(1<<PORT_USI_SDA);                                 // Set SDA as input
+    USI_SDA(DDR) = DDR_IN;
 
-    while ( (PIN_USI & (1<<PORT_USI_SCL)) && (!(PIN_USI & (1<<PORT_USI_SDA))));
+    while ( (USI_SCL(PIN)) && (!USI_SDA(PIN)));
 
-    if (!( PIN_USI & ( 1 << PIN_USI_SDA )))
+    if (!USI_SDA(PIN))
     {
         // NO Stop
         USICR = (1<<USISIE)|(1<<USIOIE)|              // Enable Overflow and Start Condition Interrupt. (Keep StartCondInt to detect RESTART)
@@ -144,7 +144,7 @@ ISR(USI_START_vect)
     }
 
     USISR = (1<<USI_START_COND_INT)|(1<<USIOIF)|(1<<USIPF)|(1<<USIDC) |   // Clear flags
-            (0x0<<USICNT0);                                               // Set USI to sample 8 bits i.e. count 16 external pin toggles.    
+            (0x0<<USICNT0);                                               // Set USI to sample 8 bits i.e. count 16 external pin toggles.
 
     uts_rxCnt = 0;
 }
