@@ -34,8 +34,6 @@ static volatile enum UsiSlaveState usi_slave_state;
 
 #define USI_SDA(dir)   GPIO(B, 0, dir)
 #define USI_SCL(dir)   GPIO(B, 2, dir)
-#define DDR_OUT        1
-#define DDR_IN         0
 
 #define USI_START_COND_INT USISIF
 #define USI_START_VECTOR USI_START_vect
@@ -101,8 +99,8 @@ void uts_init(void)
 {
     uts_rxCnt = 0;
 
-    USI_SCL(PORT) = 1;
-    USI_SDA(PORT) = 1;
+    USI_SCL(PORT) = PORT_HIGH;
+    USI_SDA(PORT) = PORT_HIGH;
     USI_SCL(DDR) = DDR_OUT;
     USI_SDA(DDR) = DDR_IN;
     USICR = (1 << USISIE) | (0 << USIOIE) | // Enable Start Condition Interrupt. Disable Overflow Interrupt.
@@ -124,9 +122,9 @@ ISR(USI_START_vect)
     usi_slave_state = USI_SLAVE_CHECK_ADDRESS;
     USI_SDA(DDR) = DDR_IN;
 
-    while ( (USI_SCL(PIN)) && (!USI_SDA(PIN)));
+    while ( (USI_SCL(PIN) == PIN_HIGH) && (USI_SDA(PIN) == PIN_LOW));
 
-    if (!USI_SDA(PIN))
+    if (USI_SDA(PIN) == PIN_LOW)
     {
         // NO Stop
         USICR = (1<<USISIE)|(1<<USIOIE)|              // Enable Overflow and Start Condition Interrupt. (Keep StartCondInt to detect RESTART)

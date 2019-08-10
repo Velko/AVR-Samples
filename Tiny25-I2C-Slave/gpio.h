@@ -29,4 +29,14 @@ struct bits {
 #define GPIO(name,pin,dir) \
  ((*(volatile struct bits*)&dir##name).b##pin)
 
+#define DDR_OUT        1
+#define DDR_IN         0
+
+#define PORT_HIGH      1
+#define PORT_LOW       0
+
+#define PIN_HIGH      1
+#define PIN_LOW       0
+
+
 #endif
