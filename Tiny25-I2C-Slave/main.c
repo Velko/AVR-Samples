@@ -17,8 +17,7 @@ int main(void)
         PORTB &= ~(1 << PORTB1);
     DDRB |= 1 << PORTB1;
 
-    usi_twi_init();
-    twi_slaveAddress = 0x30;
+    usi_twi_init(0x30);
 
     sei();
 

@@ -95,8 +95,9 @@ static void SET_USI_TO_READ_DATA(void)
 /*----------------------------------------------------------
   Initialise USI for TWI Slave mode.
 ----------------------------------------------------------*/
-void usi_twi_init(void)
+void usi_twi_init(uint8_t address)
 {
+    twi_slaveAddress = address;
     uts_rxCnt = 0;
 
     USI_SCL(PORT) = PORT_HIGH;
