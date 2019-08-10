@@ -158,7 +158,7 @@ ISR(USI_OVF_vect)
     // ---------- Address mode ----------
     // Check address and send ACK (and next USI_SLAVE_SEND_DATA) if OK, else reset USI.
     case USI_SLAVE_CHECK_ADDRESS:
-        if ((USIDR == 0) || (( USIDR>>1 ) == twi_slaveAddress))
+        if ((USIDR>>1) == twi_slaveAddress)
         {
             // Our address, let's check direction
             if ( USIDR & 0x01 )
