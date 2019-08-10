@@ -10,18 +10,11 @@ class LampDevice:
         self.isOn = False
 
     def loadState(self):
-        try:
-            self.isOn = bus.read_byte_data(self.hwid, 0x0) != 0
-        except Exception as e:
-            print ("Error", e)
-            self.isOn = False
+    	self.isOn = bus.read_byte_data(self.hwid, 0x0) != 0
 
     def setState(self, val):
-        try:
-            bus.write_byte_data(self.hwid, 0x0, 1 if val else 0)
-            self.isOn = val
-        except:
-            pass
+        bus.write_byte_data(self.hwid, 0x0, 1 if val else 0)
+        self.isOn = val
 
 
 lamp = LampDevice(0x30)
