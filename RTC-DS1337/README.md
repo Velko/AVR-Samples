@@ -37,7 +37,7 @@ make reset
 
 Set up fuses:
 ```bash
-make program
+make fuses
 ```
 
 Set and read time
