@@ -100,16 +100,31 @@ void usi_twi_init(uint8_t address)
     twi_slaveAddress = address;
     uts_rxCnt = 0;
 
+    /* Slave can slow down the transmission by holding the SCL low until it is ready to
+       receive/transmit next byte. To do that, the SCL should be configured as output, but
+       the order how we do that is important. At no point we may afford to drive the pin
+       high as an output as this may create a short if another device on the bus is pulling
+       the line low at the same moment. While the probability is quite low, this is another
+       thing that is wrong with AVR312 AppNote. Once USI is initialized, it will not interfere
+       with the bus inappropriately.
+    */
+
+    /* First configure it as inputs with pull-ups. */
+    USI_SCL(DDR) = DDR_IN;
+    USI_SDA(DDR) = DDR_IN;
     USI_SCL(PORT) = PORT_HIGH;
     USI_SDA(PORT) = PORT_HIGH;
-    USI_SCL(DDR) = DDR_OUT;
-    USI_SDA(DDR) = DDR_IN;
+
+    /* Enable the USI TWI */
     USICR = (1 << USISIE) | (0 << USIOIE) | // Enable Start Condition Interrupt. Disable Overflow Interrupt.
             (1 << USIWM1) | (0 << USIWM0) | // Set USI in Two-wire mode. No USI Counter overflow prior
                                             // to first Start Condition (potentail failure)
             (1 << USICS1) | (0 << USICS0) | (0 << USICLK) | // Shift Register Clock Source = External, positive edge
             (0 << USITC);
-    USISR = 0xF0; // Clear all flags and reset overflow counter
+    USISR = (1 << USISIF) | (1 << USIOIF) | (1 << USIPF); // Clear all flags and reset overflow counter
+
+    /* Now it is safe to set SCL as output. */
+    USI_SCL(DDR) = DDR_OUT;
 }
 
 /*----------------------------------------------------------
