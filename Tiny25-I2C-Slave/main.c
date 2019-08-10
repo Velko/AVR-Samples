@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
+#include <avr/sleep.h>
 
 #include "gpio.h"
 #include "usi_twi_slave.h"
@@ -31,34 +32,40 @@ int main(void)
 
     for (;;)
     {
-        if (uts_rxCnt > 0) {
-            addr = uts_rxBuf[0];
+        while (uts_rxCnt == 0)
+        {
+            set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+            sleep_cpu();
+        }
 
-            switch (addr)
+        addr = uts_rxBuf[0];
+
+        switch (addr)
+        {
+        // Register 0 - current state
+        case 0x0:
+            if (uts_rxCnt > 1)
             {
-            // Register 0 - current state
-            case 0x0:
-                if (uts_rxCnt > 1)
-                {
-                    ledstate = uts_rxBuf[1];
-                    if ledstate)
-                        LED(PORT) = PORT_HIGH;
-                    else
-                        LED(PORT) = PORT_LOW;
-                }
-                uts_txBuf = ledstate;
-                break;
-            // Register 0x11 - startup state
-            case 0x11:
-                if (uts_rxCnt > 1)
-                {
-                    eeprom_write_byte(INIT_STATE_STORE, uts_rxBuf[1]);
-                }
-                uts_txBuf = eeprom_read_byte(INIT_STATE_STORE);
-                break;
-            default:
-                uts_txBuf = 0xFF;
+                ledstate = uts_rxBuf[1];
+                if (ledstate)
+                    LED(PORT) = PORT_HIGH;
+                else
+                    LED(PORT) = PORT_LOW;
+                uts_rxCnt = 0;
             }
+            uts_txBuf = ledstate;
+            break;
+        // Register 0x11 - startup state
+        case 0x11:
+            if (uts_rxCnt > 1)
+            {
+                eeprom_write_byte(INIT_STATE_STORE, uts_rxBuf[1]);
+                uts_rxCnt = 0;
+            }
+            uts_txBuf = eeprom_read_byte(INIT_STATE_STORE);
+            break;
+        default:
+            uts_txBuf = 0xFF;
         }
     }
 }
