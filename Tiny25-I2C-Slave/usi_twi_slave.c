@@ -12,7 +12,7 @@
 
 //********** Static Variables **********//
 
-uint8_t uts_slaveAddress;
+uint8_t twi_slaveAddress;
 
 #define TWI_RX_BUFFER_SIZE  2
 
@@ -95,7 +95,7 @@ static void SET_USI_TO_READ_DATA(void)
 /*----------------------------------------------------------
   Initialise USI for TWI Slave mode.
 ----------------------------------------------------------*/
-void uts_init(void)
+void usi_twi_init(void)
 {
     uts_rxCnt = 0;
 
@@ -157,8 +157,9 @@ ISR(USI_OVF_vect)
     // ---------- Address mode ----------
     // Check address and send ACK (and next USI_SLAVE_SEND_DATA) if OK, else reset USI.
     case USI_SLAVE_CHECK_ADDRESS:
-        if ((USIDR == 0) || (( USIDR>>1 ) == uts_slaveAddress))
+        if ((USIDR == 0) || (( USIDR>>1 ) == twi_slaveAddress))
         {
+            // Our address, let's check direction
             if ( USIDR & 0x01 )
             {
                 usi_slave_state = USI_SLAVE_SEND_DATA;
@@ -171,7 +172,8 @@ ISR(USI_OVF_vect)
         }
         else
         {
-            SET_USI_TO_TWI_START_CONDITION_MODE();          // not my Adress.....
+            // Another device on the bus, reset
+            SET_USI_TO_TWI_START_CONDITION_MODE();
         }
         break;
 

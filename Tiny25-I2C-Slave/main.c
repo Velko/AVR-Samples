@@ -18,12 +18,12 @@ int main(void)
         PORTB &= ~(1 << PORTB1);
     DDRB |= 1 << PORTB1;
 
-    uts_init();
-    uts_slaveAddress = eeprom_read_byte(SLAVE_ADDR_STORE);
+    usi_twi_init();
+    twi_slaveAddress = eeprom_read_byte(SLAVE_ADDR_STORE);
 
     // reset to default, if invalid address
-    if (uts_slaveAddress < 8 || uts_slaveAddress >= 120)
-        uts_slaveAddress = 0x30;
+    if (twi_slaveAddress < 8 || twi_slaveAddress >= 120)
+        twi_slaveAddress = 0x30;
 
     sei();
 
@@ -55,12 +55,12 @@ int main(void)
                 if (uts_rxCnt > 1)
                 {
                     // set and store slave address
-                    uts_slaveAddress = uts_rxBuf[1];
-                    if (uts_slaveAddress < 8 || uts_slaveAddress >= 120)
-                        uts_slaveAddress = 0x30;
-                    eeprom_write_byte(SLAVE_ADDR_STORE, uts_slaveAddress);
+                    twi_slaveAddress = uts_rxBuf[1];
+                    if (twi_slaveAddress < 8 || twi_slaveAddress >= 120)
+                        twi_slaveAddress = 0x30;
+                    eeprom_write_byte(SLAVE_ADDR_STORE, twi_slaveAddress);
                 }
-                uts_txBuf = uts_slaveAddress;
+                uts_txBuf = twi_slaveAddress;
                 break;
             // Register 0x11 - startup state
             case 0x11:
