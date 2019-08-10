@@ -14,6 +14,8 @@
 #ifndef __GPIO_H__
 #define __GPIO_H__
 
+#include <stdint.h>
+
 struct bits {
   uint8_t b0:1;
   uint8_t b1:1;

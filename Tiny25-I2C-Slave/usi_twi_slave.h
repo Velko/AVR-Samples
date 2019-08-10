@@ -1,9 +1,9 @@
 #ifndef USI_TWI_SLAVE_H
 #define USI_TWI_SLAVE_H
 
-void usi_twi_init(void);
+#include <stdint.h>
 
-typedef unsigned char uint8_t;
+void usi_twi_init(void);
 
 extern volatile uint8_t uts_rxCnt;
 extern uint8_t          uts_rxBuf[];
