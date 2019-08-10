@@ -7,6 +7,7 @@ CFLAGS=-g -Os -Wall -mcall-prologues -fshort-enums -mmcu=attiny25
 OBJ2HEX=/usr/bin/avr-objcopy 
 DUDE=/usr/bin/avrdude 
 
+.SECONDARY: $(TARGET).elf
 
 all: $(TARGET).hex
 
