@@ -5,7 +5,6 @@
 #include "usi_twi_slave.h"
 
 
-#define SLAVE_ADDR_STORE  ((uint8_t*)0)
 #define INIT_STATE_STORE  ((uint8_t*)1)
 
 int main(void)
@@ -19,11 +18,7 @@ int main(void)
     DDRB |= 1 << PORTB1;
 
     usi_twi_init();
-    twi_slaveAddress = eeprom_read_byte(SLAVE_ADDR_STORE);
-
-    // reset to default, if invalid address
-    if (twi_slaveAddress < 8 || twi_slaveAddress >= 120)
-        twi_slaveAddress = 0x30;
+    twi_slaveAddress = 0x30;
 
     sei();
 
@@ -49,18 +44,6 @@ int main(void)
                         PORTB &= ~(1 << PORTB1);
                 }
                 uts_txBuf = ledstate;
-                break;
-            // Register 0x10 - device address
-            case 0x10:
-                if (uts_rxCnt > 1)
-                {
-                    // set and store slave address
-                    twi_slaveAddress = uts_rxBuf[1];
-                    if (twi_slaveAddress < 8 || twi_slaveAddress >= 120)
-                        twi_slaveAddress = 0x30;
-                    eeprom_write_byte(SLAVE_ADDR_STORE, twi_slaveAddress);
-                }
-                uts_txBuf = twi_slaveAddress;
                 break;
             // Register 0x11 - startup state
             case 0x11:
