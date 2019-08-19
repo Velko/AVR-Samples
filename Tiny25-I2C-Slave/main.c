@@ -1,6 +1,5 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <avr/eeprom.h>
 #include <avr/sleep.h>
 
 #include "gpio.h"
@@ -14,10 +13,7 @@
 int main(void)
 {
     // Load initial state and turn output on/off
-    uint8_t ledstate = eeprom_read_byte(INIT_STATE_STORE);
-    if (ledstate)
-        LED(PORT) = PORT_HIGH;
-    else
+    uint8_t ledstate = 0;
         LED(PORT) = PORT_LOW;
 
     LED(DDR) = DDR_OUT;
@@ -54,15 +50,6 @@ int main(void)
                 uts_rxCnt = 0;
             }
             uts_txBuf = ledstate;
-            break;
-        // Register 0x11 - startup state
-        case 0x11:
-            if (uts_rxCnt > 1)
-            {
-                eeprom_write_byte(INIT_STATE_STORE, uts_rxBuf[1]);
-                uts_rxCnt = 0;
-            }
-            uts_txBuf = eeprom_read_byte(INIT_STATE_STORE);
             break;
         default:
             uts_txBuf = 0xFF;
