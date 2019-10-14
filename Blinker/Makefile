@@ -12,7 +12,7 @@ DUDE=/usr/bin/avrdude
 all: $(TARGET).hex
 
 program : $(TARGET).hex
-	$(DUDE) -p t45 -c $(PROGRAMMER) -y -U flash:w:$(TARGET).hex
+	$(DUDE) -p t45 -c $(PROGRAMMER) -U flash:w:$(TARGET).hex
 
 fuses:
 	# Turn off CKDIV8 fuse bit - enabling full speed on internal oscillator
