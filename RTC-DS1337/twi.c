@@ -65,4 +65,5 @@ void twi_nack()
 void twi_stop()
 {
     TWCR = _BV(TWINT) | _BV(TWEN) | _BV(TWSTO);
+    loop_until_bit_is_clear(TWCR, TWSTO);
 }
