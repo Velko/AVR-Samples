@@ -5,6 +5,8 @@
 
 #include "defines.h"
 
+#include <util/setbaud.h>
+
 //1234567890123456
 //t1307221203816rn
 // yyMMddWhhmmss
@@ -16,13 +18,17 @@ FILE uart_str;
 
 void uart_init()
 {
-#if F_CPU < 2000000UL && defined(U2X)
-    UCSRA = _BV(U2X);             /* improve baud rate error by using 2x clk */
-    UBRRL = (F_CPU / (8UL * UART_BAUD)) - 1;
+    UBRRH = UBRRH_VALUE;
+    UBRRL = UBRRL_VALUE;
+
+#if USE_2X
+    UCSRA |= _BV(U2X);
 #else
-    UBRRL = (F_CPU / (16UL * UART_BAUD)) - 1;
+    UCSR0A &= ~(_BV(U2X0));
 #endif
-    UCSRB = _BV(TXEN) | _BV(RXEN); /* tx/rx enable */
+
+    UCSRC = _BV(UCSZ1) | _BV(UCSZ0); /* 8-bit data */
+    UCSRB = _BV(RXEN) | _BV(TXEN);   /* Enable RX and TX */
 
     /* UART interrupt */
     UCSRB |= _BV(RXCIE);
