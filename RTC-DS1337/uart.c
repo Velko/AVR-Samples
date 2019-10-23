@@ -16,6 +16,29 @@ volatile uint8_t uart_rxf;
 
 FILE uart_str;
 
+#ifdef __AVR_ATmega328P__
+
+/* The difference between "classic" ATmega8 and ATmega328p is that
+   the registers and bits are named differently */
+
+#define UBRRH   UBRR0H
+#define UBRRL   UBRR0L
+#define UCSRA   UCSR0A
+#define U2X     U2X0
+#define UCSRC   UCSR0C
+#define UCSZ1   UCSZ01
+#define UCSZ0   UCSZ00
+#define UCSRB   UCSR0B
+#define RXEN    RXEN0
+#define TXEN    TXEN0
+#define RXCIE   RXCIE0
+#define UDRE    UDRE0
+#define UDR     UDR0
+#define RXC     RXC0
+#define USART_RXC_vect  USART_RX_vect
+
+#endif
+
 void uart_init()
 {
     UBRRH = UBRRH_VALUE;
